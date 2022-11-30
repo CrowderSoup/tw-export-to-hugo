@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -48,6 +50,28 @@ func getFilesRecursively(dir string) ([]string, error) {
 }
 
 func getFileContents(files []string) (map[string]string, error) {
-	log.Fatal("Not Implemented")
-	return nil, nil
+	var contents = make(map[string]string)
+
+	for _, file := range files {
+		content, err := ioutil.ReadFile(file)
+		if err != nil {
+			return contents, err
+		}
+
+		contents[file] = string(content)
+	}
+
+	return contents, nil
+}
+
+func getTweets(archiveContents map[string]string) (map[string][]string, error) {
+	var tweets = make(map[string][]string)
+
+	for key, content := range archiveContents {
+		fileTweets := strings.Split(content, "---")
+		// TODO: key should be a URL slug here, generated from the content
+		tweets[key] = append(tweets[key], fileTweets...)
+	}
+
+	return tweets, nil
 }
