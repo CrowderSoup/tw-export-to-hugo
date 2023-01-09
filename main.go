@@ -19,8 +19,17 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for filePath, fileContent := range contents {
-		fmt.Printf("%s: %s\n\n", filePath, fileContent)
+	tweets, err := getTweetsByFile(contents)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for file, fileTweets := range tweets {
+		fmt.Println(file)
+		for _, tweet := range fileTweets {
+			fmt.Println(file)
+			fmt.Println(tweet)
+		}
 	}
 }
 
@@ -53,6 +62,11 @@ func getFileContents(files []string) (map[string]string, error) {
 	var contents = make(map[string]string)
 
 	for _, file := range files {
+		// I don't want any tweets before 2020
+		if !strings.Contains(file, "202") {
+			continue
+		}
+
 		content, err := ioutil.ReadFile(file)
 		if err != nil {
 			return contents, err
@@ -64,12 +78,11 @@ func getFileContents(files []string) (map[string]string, error) {
 	return contents, nil
 }
 
-func getTweets(archiveContents map[string]string) (map[string][]string, error) {
+func getTweetsByFile(archiveContents map[string]string) (map[string][]string, error) {
 	var tweets = make(map[string][]string)
 
 	for key, content := range archiveContents {
-		fileTweets := strings.Split(content, "---")
-		// TODO: key should be a URL slug here, generated from the content
+		fileTweets := strings.Split(content, "----")
 		tweets[key] = append(tweets[key], fileTweets...)
 	}
 
