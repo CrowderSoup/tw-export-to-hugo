@@ -8,6 +8,23 @@ import (
 	"strings"
 )
 
+// TweetType classifies a type of tweet
+type TweetType string
+
+const (
+	// Post An original tweet
+	Post TweetType = "post"
+	// Reply A reply to a tweet
+	Reply = "reply"
+	// Retweet a repost of a tweeet
+	Retweet = "retweet"
+)
+
+// Tweet is a post on twitter
+type Tweet struct {
+	Type TweetType
+}
+
 func main() {
 	files, err := getFilesRecursively("./archive/tweets-md")
 	if err != nil {
