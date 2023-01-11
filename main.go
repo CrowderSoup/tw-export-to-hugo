@@ -9,20 +9,23 @@ import (
 )
 
 // TweetType classifies a type of tweet
-type TweetType string
+type TweetType int
 
 const (
 	// Post An original tweet
-	Post TweetType = "post"
+	Post TweetType = iota + 1 // 1
+
 	// Reply A reply to a tweet
-	Reply = "reply"
+	Reply // 2
+
 	// Retweet a repost of a tweeet
-	Retweet = "retweet"
+	Retweet // 3
 )
 
 // Tweet is a post on twitter
 type Tweet struct {
 	Type TweetType
+	Body string
 }
 
 func main() {
@@ -41,13 +44,42 @@ func main() {
 		log.Fatal(err)
 	}
 
+	totalTweets := 0
+	potentialQuoteTweets := 0
 	for file, fileTweets := range tweets {
 		fmt.Println(file)
 		for _, tweet := range fileTweets {
+			trimmedTweet := strings.TrimSpace(tweet)
 			fmt.Println(file)
-			fmt.Println(tweet)
+			fmt.Println(trimmedTweet)
+			totalTweets = totalTweets + 1
+
+			if strings.Contains(trimmedTweet, "twitter\\.com") {
+				potentialQuoteTweets = potentialQuoteTweets + 1
+			}
 		}
 	}
+
+	postTweets, err := getPostTweets(tweets)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	replyTweets, err := getReplyTweets(tweets)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	retweets, err := getRetweets(tweets)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Total Tweets: %d\n", totalTweets)
+	fmt.Printf("Post Tweets: %d\n", len(postTweets))
+	fmt.Printf("Reply Tweets: %d\n", len(replyTweets))
+	fmt.Printf("Retweets: %d\n", len(retweets))
+	fmt.Printf("Potential Quote Tweets: %d\n", potentialQuoteTweets)
 }
 
 func getFilesRecursively(dir string) ([]string, error) {
@@ -104,4 +136,58 @@ func getTweetsByFile(archiveContents map[string]string) (map[string][]string, er
 	}
 
 	return tweets, nil
+}
+
+func getPostTweets(tweets map[string][]string) ([]Tweet, error) {
+	var postTweets []Tweet
+
+	for _, fileTweets := range tweets {
+		for _, tweet := range fileTweets {
+			trimmedTweet := strings.TrimSpace(tweet)
+			if strings.HasPrefix(trimmedTweet, ">") && !strings.HasPrefix(trimmedTweet, "> RT") {
+				postTweets = append(postTweets, Tweet{
+					Type: Post,
+					Body: tweet,
+				})
+			}
+		}
+	}
+
+	return postTweets, nil
+}
+
+func getReplyTweets(tweets map[string][]string) ([]Tweet, error) {
+	var replyTweets []Tweet
+
+	for _, fileTweets := range tweets {
+		for _, tweet := range fileTweets {
+			trimmedTweet := strings.TrimSpace(tweet)
+			if strings.HasPrefix(trimmedTweet, "Replying to") {
+				replyTweets = append(replyTweets, Tweet{
+					Type: Reply,
+					Body: trimmedTweet,
+				})
+			}
+		}
+	}
+
+	return replyTweets, nil
+}
+
+func getRetweets(tweets map[string][]string) ([]Tweet, error) {
+	var retweets []Tweet
+
+	for _, fileTweets := range tweets {
+		for _, tweet := range fileTweets {
+			trimmedTweet := strings.TrimSpace(tweet)
+			if strings.HasPrefix(trimmedTweet, "> RT") {
+				retweets = append(retweets, Tweet{
+					Type: Retweet,
+					Body: tweet,
+				})
+			}
+		}
+	}
+
+	return retweets, nil
 }
